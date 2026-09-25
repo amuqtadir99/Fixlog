@@ -75,6 +75,11 @@ jobs:
     name: Dependency review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Requires Settings → Code security → "Dependency graph". Until that is
+    # enabled the action cannot run, so it reports without blocking; `npm audit`
+    # in the quality job still gates high-severity advisories. Remove this line
+    # once the dependency graph is on.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
