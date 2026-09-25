@@ -8,7 +8,7 @@ export interface IcsEvent {
 }
 
 export function icsEscape(s: string): string {
-  return s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 }
 
 /** Fold lines longer than 75 octets (approximated by chars). */

@@ -18,11 +18,12 @@ describe("csv", () => {
 
 describe("ics", () => {
   it("escapes text and emits all-day events", () => {
-    expect(icsEscape("a,b;c\nd\\")).toBe("a\\,b\;c\\nd\\\\");
+    expect(icsEscape("a,b;c\nd\\")).toBe("a\\,b\\;c\\nd\\\\");
     const out = toIcs([{ uid: "1", date: "2026-12-31", summary: "Oil, filter" }], new Date("2026-09-25T00:00:00Z"));
     expect(out).toContain("DTSTART;VALUE=DATE:20261231");
     expect(out).toContain("DTEND;VALUE=DATE:20270101");
     expect(out).toContain("SUMMARY:Oil\\, filter");
+    expect(toIcs([{ uid: "2", date: "2026-12-31", summary: "a;b" }])).toContain("SUMMARY:a\\;b");
     expect(out.endsWith("END:VCALENDAR\r\n")).toBe(true);
   });
 });
