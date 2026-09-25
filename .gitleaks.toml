@@ -1,0 +1,13 @@
+# Extend gitleaks' default rules; allowlist only the documented, non-secret CI
+# placeholders (the Clerk key is base64 of "example.clerk.accounts.dev$").
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret placeholder values used to build in CI"
+regexTarget = "match"
+regexes = [
+  '''pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk''',
+  '''sk_test_ci_placeholder''',
+  '''sb_publishable_ci_placeholder_key''',
+]

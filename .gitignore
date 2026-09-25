@@ -34,3 +34,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase cli
+supabase/.temp
+supabase/.branches
+
+# env (keep the template)
+!.env.example
+
+# test / tooling
+/playwright-report
+/test-results
