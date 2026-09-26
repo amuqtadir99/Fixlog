@@ -11,6 +11,21 @@ merge to main ──▶ CI ──▶ supabase db push ──▶ Vercel productio
 `live` always points to the commit running in production — use it for hotfix diffs and rollbacks
 (`vercel rollback` or re-run _Deploy_ on an older commit via _workflow_dispatch_).
 
+## Try it first: demo mode (no Clerk)
+
+To explore the app before setting up sign-in:
+
+1. In Vercel → _Settings → Environment Variables_ set `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY`), `SUPABASE_SECRET_KEY`
+   (or `SUPABASE_SERVICE_ROLE_KEY`) and **`DEMO_MODE=true`**. Leave the Clerk keys unset.
+2. Apply the database schema (below, step 1.4). Without it every page fails to load data.
+3. Redeploy. Open `/api/health`: it should say `"authMode":"demo"` and `"database":"ok"`.
+
+Everyone who opens the site shares one demo account, so treat the data as public. Adding the Clerk keys
+later switches to real accounts automatically (demo data stays under the `demo_user` id and is never shown to
+real users). Without Clerk keys _and_ without `DEMO_MODE=true`, the site shows a setup page listing what's
+missing instead of an error.
+
 ## One-time setup
 
 ### 1. Supabase
@@ -18,7 +33,13 @@ merge to main ──▶ CI ──▶ supabase db push ──▶ Vercel productio
 1. Create a project at <https://supabase.com> (free tier).
 2. _Authentication → Sign In / Providers → Third-party auth → Add Clerk_, paste your Clerk domain.
 3. _Project Settings → API keys_: copy the URL, **publishable** key and **secret** key.
-4. Apply schema: `npx supabase link --project-ref <ref>` then `npx supabase db push` (CI does this on every merge).
+4. Apply schema, either:
+   - **CLI:** `npx supabase link --project-ref <ref>` then `npx supabase db push` (CI does this on every
+     merge once the Supabase GitHub secrets exist), or
+   - **Dashboard:** _SQL Editor → New query_, paste each file from `supabase/migrations/` **in filename
+     order**, and run it.
+
+   Check with `https://<your-domain>/api/health` → `"database":"ok"` (needs the secret key set).
 
 ### 2. Clerk
 

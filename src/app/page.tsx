@@ -2,6 +2,7 @@ import { Show } from "@clerk/nextjs";
 import { BellRing, CalendarDays, History, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { LinkButton } from "@/components/ui/button";
+import { getAuthMode } from "@/lib/auth-mode";
 import { CATEGORIES } from "@/lib/catalog";
 
 const FEATURES = [
@@ -38,28 +39,35 @@ const FEATURES = [
 ];
 
 export default function Home() {
+  const isDemo = getAuthMode() === "demo";
   return (
     <div className="flex min-h-screen flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <Logo />
         <nav className="flex items-center gap-2">
-          <Show
-            when="signed-in"
-            fallback={
-              <>
-                <LinkButton href="/sign-in" variant="ghost" size="sm">
-                  Sign in
-                </LinkButton>
-                <LinkButton href="/sign-up" size="sm">
-                  Get started
-                </LinkButton>
-              </>
-            }
-          >
+          {isDemo ? (
             <LinkButton href="/dashboard" size="sm">
-              Open dashboard
+              Open demo
             </LinkButton>
-          </Show>
+          ) : (
+            <Show
+              when="signed-in"
+              fallback={
+                <>
+                  <LinkButton href="/sign-in" variant="ghost" size="sm">
+                    Sign in
+                  </LinkButton>
+                  <LinkButton href="/sign-up" size="sm">
+                    Get started
+                  </LinkButton>
+                </>
+              }
+            >
+              <LinkButton href="/dashboard" size="sm">
+                Open dashboard
+              </LinkButton>
+            </Show>
+          )}
         </nav>
       </header>
 
@@ -76,12 +84,20 @@ export default function Home() {
             it breaks.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <LinkButton href="/sign-up" className="h-11 px-6">
-              Start free
-            </LinkButton>
-            <LinkButton href="/sign-in" variant="secondary" className="h-11 px-6">
-              I have an account
-            </LinkButton>
+            {isDemo ? (
+              <LinkButton href="/dashboard" className="h-11 px-6">
+                Try the demo
+              </LinkButton>
+            ) : (
+              <>
+                <LinkButton href="/sign-up" className="h-11 px-6">
+                  Start free
+                </LinkButton>
+                <LinkButton href="/sign-in" variant="secondary" className="h-11 px-6">
+                  I have an account
+                </LinkButton>
+              </>
+            )}
           </div>
           <ul className="mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-2" aria-label="Supported categories">
             {CATEGORIES.map((c) => (

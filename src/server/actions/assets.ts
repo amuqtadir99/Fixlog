@@ -45,13 +45,17 @@ export async function createAsset(_prev: ActionState | null, formData: FormData)
 
   let assetId: string;
   try {
-    const { supabase } = await mutationContext();
-    const { data, error } = await supabase.from("assets").insert(parsed.data.asset).select("id").single();
+    const { supabase, userId } = await mutationContext();
+    const { data, error } = await supabase
+      .from("assets")
+      .insert({ ...parsed.data.asset, user_id: userId })
+      .select("id")
+      .single();
     if (error) return dbError("save the item", error);
     assetId = data.id;
 
     if (parsed.data.tasks.length) {
-      const rows = parsed.data.tasks.map((t) => ({ ...t, asset_id: assetId }));
+      const rows = parsed.data.tasks.map((t) => ({ ...t, asset_id: assetId, user_id: userId }));
       const { error: taskError } = await supabase.from("maintenance_tasks").insert(rows);
       if (taskError) return dbError("create the suggested tasks", taskError);
     }
@@ -69,8 +73,8 @@ export async function updateAsset(id: string, _prev: ActionState | null, formDat
   const parsed = assetSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
   try {
-    const { supabase } = await mutationContext();
-    const { error } = await supabase.from("assets").update(parsed.data).eq("id", id);
+    const { supabase, userId } = await mutationContext();
+    const { error } = await supabase.from("assets").update(parsed.data).eq("id", id).eq("user_id", userId);
     if (error) return dbError("update the item", error);
   } catch (e) {
     if (e instanceof RateLimitError) return { ok: false, message: e.message };
@@ -82,16 +86,16 @@ export async function updateAsset(id: string, _prev: ActionState | null, formDat
 
 export async function setAssetArchived(id: string, archived: boolean): Promise<void> {
   if (!idSchema.safeParse(id).success || typeof archived !== "boolean") return;
-  const { supabase } = await mutationContext();
-  const { error } = await supabase.from("assets").update({ archived }).eq("id", id);
+  const { supabase, userId } = await mutationContext();
+  const { error } = await supabase.from("assets").update({ archived }).eq("id", id).eq("user_id", userId);
   if (error) throw new Error(dbError("archive the item", error).message);
   revalidatePath("/", "layout");
 }
 
 export async function deleteAsset(id: string): Promise<void> {
   if (!idSchema.safeParse(id).success) return;
-  const { supabase } = await mutationContext();
-  const { error } = await supabase.from("assets").delete().eq("id", id);
+  const { supabase, userId } = await mutationContext();
+  const { error } = await supabase.from("assets").delete().eq("id", id).eq("user_id", userId);
   if (error) throw new Error(dbError("delete the item", error).message);
   revalidatePath("/", "layout");
   redirect("/items");

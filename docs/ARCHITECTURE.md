@@ -90,6 +90,13 @@ Derived values (urgency, health score) are computed in `lib/domain.ts` — never
 stored — so they are always consistent with "today" in the user's timezone
 (read from a `tz` cookie, fallback UTC).
 
+### Auth modes
+
+`src/lib/auth-mode.ts` picks one per deployment: **clerk** (normal), **demo** (no Clerk keys +
+`DEMO_MODE=true`: no sign-in, shared `demo_user`, service-role client with explicit `user_id` filters) or
+**unconfigured** (setup page; APIs 401). `proxy.ts` uses Clerk's middleware only in clerk mode and otherwise
+emits an equivalent strict nonce CSP itself.
+
 ## 5. Key decisions (ADR summary)
 
 1. **Server Actions over a separate REST API** — fewer moving parts, end-to-end types, built-in CSRF protection (Origin check) in Next.js.

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUserId } from "@/lib/supabase/server";
 import { toCsv } from "@/lib/csv";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { typeLabel, categoryLabel } from "@/lib/catalog";
@@ -8,7 +8,7 @@ import { getToday } from "@/server/today";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getCurrentUserId();
   if (!userId) return new Response("Unauthorized", { status: 401 });
   if (!(await checkRateLimit(`export:${userId}`))) return new Response("Too many requests", { status: 429 });
 

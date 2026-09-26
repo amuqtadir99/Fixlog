@@ -24,8 +24,17 @@ this repository. We aim to acknowledge within 72 hours.
 | Abuse / DoS                               | Per-user sliding-window rate limit on all mutations and exports (Upstash Redis when configured). Row caps on list queries. Vercel Firewall/DDoS.                                                                                                                                                              | `src/lib/rate-limit.ts`                              |
 | Privacy / erasure                         | `user.deleted` webhook erases all rows for that user. Service-role key used only there.                                                                                                                                                                                                                       | `src/app/api/webhooks/clerk/route.ts`                |
 
+## Demo mode
+
+`DEMO_MODE=true` (honoured only when Clerk keys are absent) disables sign-in for evaluation: all visitors act
+as the single `demo_user` through the service-role client. RLS is bypassed in this mode, so every query and
+mutation in `src/server/` also filters/sets `user_id` explicitly and "mark done" checks ownership first.
+Without Clerk keys and without the flag the app fails closed (setup page, APIs return 401). Never run a
+production deployment with real users in demo mode.
+
 ## Operational checklist (production)
 
+- [ ] `DEMO_MODE` unset (and Clerk keys present).
 - [ ] Clerk: production instance, allowed origins set, bot protection on, MFA available.
 - [ ] Clerk webhook → `/api/webhooks/clerk` with `user.deleted`; `CLERK_WEBHOOK_SIGNING_SECRET` set.
 - [ ] Supabase: Clerk added under _Authentication → Third-party auth_; Data API only exposes `public`.

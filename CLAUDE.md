@@ -26,8 +26,9 @@ Don't re-derive these — update them when behaviour changes.
 
 - `src/lib/` pure/shared logic: `catalog.ts` (categories/types/suggested tasks), `domain.ts` (urgency,
   intervals, health score — unit tested), `validation.ts` (all Zod schemas), `csv.ts`, `ics.ts`.
-- `src/lib/supabase/server.ts` → `getSupabase()` per-request RLS client. `admin.ts` (service role) is
-  ONLY for the Clerk webhook.
+- `src/lib/supabase/server.ts` → `getSupabase()` per-request client + userId (RLS client in Clerk mode,
+  service role in demo mode). `admin.ts` (service role) is used only there, in the Clerk webhook and in
+  `/api/health`'s schema check.
 - `src/server/queries.ts` reads; `src/server/actions/*.ts` mutations (`"use server"`), all through
   `mutationContext()` (auth + rate limit). After a mutation call `revalidatePath("/", "layout")`.
 - `src/app/(app)/*` authenticated pages; `src/components/ui` primitives; `src/components/features` feature UI.
@@ -37,6 +38,10 @@ Don't re-derive these — update them when behaviour changes.
 
 - Every new table: `user_id text not null default public.requesting_user_id()`, RLS enabled + forced,
   owner policies for each verb, `enforce_same_owner` trigger if it references a parent, and RLS tests.
+- Auth mode (`src/lib/auth-mode.ts`): `clerk` | `demo` (no Clerk + `DEMO_MODE=true`, service-role client,
+  shared `demo_user`) | `unconfigured` (setup page). Because demo bypasses RLS, EVERY query/mutation in
+  `src/server/` must also `.eq("user_id", userId)` / set `user_id` explicitly. Never call Clerk's `auth()`
+  directly outside `src/lib/supabase/server.ts` — use `getSupabase()` / `getCurrentUserId()`.
 - Never trust ids from the client: validate with `idSchema`; parse all input with Zod (objects strip
   unknown keys — never spread raw FormData into an insert).
 - Never log or return raw DB errors to the client (`dbError()` helper). Never use `dangerouslySetInnerHTML`.
