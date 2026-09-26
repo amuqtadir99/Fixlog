@@ -7,7 +7,7 @@ import { publicEnv } from "../env";
  * server code (e.g. the Clerk webhook). Never import from a component.
  */
 export function getAdminSupabase() {
-  const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("SUPABASE_SECRET_KEY is not configured");
   return createClient(publicEnv().NEXT_PUBLIC_SUPABASE_URL, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },

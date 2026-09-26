@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "256kb" },
   },
+  async rewrites() {
+    // Browsers request /favicon.ico regardless of <link rel="icon">; serve the SVG icon.
+    return [{ source: "/favicon.ico", destination: "/icon.svg" }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

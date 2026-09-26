@@ -97,5 +97,28 @@ do $$ begin
   assert (select count(*) from public.service_logs) = 0, 'cascade delete';
 end $$;
 
+-- ---- service role (demo mode) ----------------------------------------------
+reset role;
+select set_config('request.jwt.claims', '', true);
+set local role service_role;
+insert into public.assets (id, user_id, name, category, item_type)
+  values ('00000000-0000-0000-0000-00000000000d', 'demo_user', 'Demo car', 'vehicle', 'car');
+insert into public.maintenance_tasks (id, user_id, asset_id, title, interval_value, interval_unit, next_due_on)
+  values ('00000000-0000-0000-0000-0000000000d1', 'demo_user', '00000000-0000-0000-0000-00000000000d',
+          'Oil', 1, 'year', '2026-01-01');
+select public.complete_task('00000000-0000-0000-0000-0000000000d1', '2026-03-01');
+do $$ begin
+  assert (select user_id from public.service_logs where task_id = '00000000-0000-0000-0000-0000000000d1') = 'demo_user',
+    'service-role completion logs under the task owner';
+  assert (select next_due_on from public.maintenance_tasks where id = '00000000-0000-0000-0000-0000000000d1') = '2027-03-01',
+    'service-role completion reschedules';
+  begin
+    insert into public.maintenance_tasks (user_id, asset_id, title)
+      values ('someone_else', '00000000-0000-0000-0000-00000000000d', 'x');
+    raise exception 'cross-owner task allowed for service role';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
 rollback;
 \echo 'RLS tests passed'
