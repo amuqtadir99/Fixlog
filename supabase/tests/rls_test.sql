@@ -64,6 +64,56 @@ do $$ begin
   end;
 end $$;
 
+-- ---- notification settings -------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"user_a","role":"authenticated"}', true);
+insert into public.notification_settings (email, enabled, frequency, lead_days)
+  values ('a@example.com', true, 'daily', 7);
+do $$ begin
+  -- Users cannot mark their own address verified or touch tokens/bookkeeping.
+  begin
+    update public.notification_settings set email_verified_at = now();
+    raise exception 'user set email_verified_at';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.notification_settings set last_sent_at = now();
+    raise exception 'user set last_sent_at';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.notification_settings (user_id, email, email_verified_at)
+      values ('user_a', 'x@example.com', now());
+    raise exception 'user inserted verified row';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.notification_settings set email = 'not-an-email';
+    raise exception 'invalid email accepted';
+  exception when check_violation then null;
+  end;
+end $$;
+
+select set_config('request.jwt.claims', '{"sub":"user_b","role":"authenticated"}', true);
+do $$ begin
+  assert (select count(*) from public.notification_settings) = 0, 'B cannot read A settings';
+end $$;
+update public.notification_settings set enabled = false;
+
+-- Changing the address resets verification (server verified it first).
+reset role;
+update public.notification_settings set email_verified_at = now(), verify_token_hash = 'h' where user_id = 'user_a';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"user_a","role":"authenticated"}', true);
+do $$ begin
+  assert (select enabled from public.notification_settings) = true, 'B could not disable A reminders';
+  assert (select email_verified_at is not null from public.notification_settings), 'verified by server';
+end $$;
+update public.notification_settings set email = 'new@example.com';
+do $$ begin
+  assert (select email_verified_at is null and verify_token_hash is null from public.notification_settings),
+    'email change resets verification';
+end $$;
+
 -- ---- anon has no access -----------------------------------------------------
 select set_config('request.jwt.claims', '', true);
 set local role anon;

@@ -5,7 +5,9 @@ import { ServiceLogButton } from "@/components/features/service-log-form";
 import { StatTile } from "@/components/features/stat-tile";
 import { TaskList } from "@/components/features/task-list";
 import { LinkButton } from "@/components/ui/button";
-import { Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/card";
+import { Card, CardHeader, PageHeader } from "@/components/ui/card";
+import { GettingStartedSteps, SectionGuide } from "@/components/features/guide";
+import { SampleDataButton } from "@/components/features/sample-data-button";
 import { CATEGORIES } from "@/lib/catalog";
 import { compareTasks, formatDate, formatMoney, getUrgency, healthScore } from "@/lib/domain";
 import { listAssets, listServiceLogs, listTasks } from "@/server/queries";
@@ -25,12 +27,27 @@ export default async function DashboardPage() {
   if (assets.length === 0) {
     return (
       <>
-        <PageHeader title="Welcome to FixLog 👋" description="Add the first thing you want to keep an eye on." />
-        <EmptyState
-          title="Nothing tracked yet"
-          body="Pick from 65+ item types — HVAC, cars, smoke detectors, laptops, watches… — and we'll suggest a maintenance schedule."
-          action={<LinkButton href="/items/new">Add your first item</LinkButton>}
+        <PageHeader
+          title="Welcome to FixLog 👋"
+          description="FixLog remembers when you last serviced or fixed things, and tells you what's due next."
         />
+        <Card className="mb-6">
+          <CardHeader
+            title="Get started in 4 steps"
+            description="Most people start by adding their car or home systems."
+          />
+          <GettingStartedSteps />
+          <div className="border-line mt-5 flex flex-wrap items-start gap-3 border-t pt-5">
+            <LinkButton href="/items/new">Add your first item</LinkButton>
+            <SampleDataButton />
+            <p className="text-muted basis-full text-xs">
+              Sample data adds a car, a fridge, a smoke alarm and an AC unit with realistic schedules, so you can see
+              how the dashboard works. Delete them any time from each item&apos;s page.
+            </p>
+          </div>
+        </Card>
+        <h2 className="text-ink mb-3 text-base font-semibold">Where things are</h2>
+        <SectionGuide />
       </>
     );
   }

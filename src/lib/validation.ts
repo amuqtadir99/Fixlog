@@ -142,6 +142,16 @@ export const commentSchema = z.object({
   body: requiredText(2000, "Comment"),
 });
 
+export const notificationSettingsSchema = z.object({
+  email: z.email("Enter a valid email address").trim().toLowerCase().max(254),
+  enabled: z
+    .union([z.literal("on"), z.literal("true"), z.literal(""), z.null()])
+    .optional()
+    .transform((v) => v === "on" || v === "true"),
+  frequency: z.enum(["daily", "weekly"]),
+  lead_days: z.coerce.number().int().min(0).max(60),
+});
+
 export type ActionState = {
   ok: boolean;
   message?: string;

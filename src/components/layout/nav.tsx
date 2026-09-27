@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, History, LayoutDashboard, ListChecks, Package } from "lucide-react";
+import { CalendarDays, History, LayoutDashboard, ListChecks, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ export const NAV = [
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/history", label: "History", icon: History },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function SideNav() {
@@ -43,7 +44,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="border-line bg-surface/95 fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -53,7 +54,7 @@ export function BottomNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+              "flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium sm:text-[11px]",
               active ? "text-accent-ink" : "text-muted",
             )}
           >

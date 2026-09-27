@@ -31,6 +31,9 @@ Don't re-derive these — update them when behaviour changes.
   `/api/health`'s schema check.
 - `src/server/queries.ts` reads; `src/server/actions/*.ts` mutations (`"use server"`), all through
   `mutationContext()` (auth + rate limit). After a mutation call `revalidatePath("/", "layout")`.
+- Email: `src/lib/email/` (Resend client, escaped templates), `src/server/notifications.ts` (tokens, digest,
+  cron runner), `src/server/actions/notifications.ts`. Only confirmed addresses get mail; never let a user
+  write `email_verified_at` (column grants + RLS test).
 - `src/app/(app)/*` authenticated pages; `src/components/ui` primitives; `src/components/features` feature UI.
 - `supabase/migrations/*.sql` schema + RLS; `supabase/tests/rls_test.sql` must cover new tables.
 

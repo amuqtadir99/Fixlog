@@ -1,15 +1,20 @@
 import { UserButton } from "@clerk/nextjs";
-import { Plus } from "lucide-react";
+import { CircleHelp, Plus } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
 import { BottomNav, SideNav } from "@/components/layout/nav";
 import { RealtimeRefresh } from "@/components/layout/realtime-refresh";
 import { TimezoneSync } from "@/components/layout/timezone-sync";
 import { DemoBanner } from "@/components/layout/demo-banner";
+import { DataSetupNotice } from "@/components/layout/data-setup-notice";
+import { buttonClass } from "@/components/ui/button";
 import { getAuthMode } from "@/lib/auth-mode";
+import { checkDataAccess } from "@/server/preflight";
+import Link from "next/link";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const isDemo = getAuthMode() === "demo";
+  const setupIssue = await checkDataAccess();
   return (
     <div className="flex min-h-screen">
       <aside className="border-line bg-surface sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r p-4 lg:flex">
@@ -26,7 +31,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Logo href="/dashboard" />
           </div>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/help" className={buttonClass("ghost", "sm", "px-2")} aria-label="Help">
+              <CircleHelp className="size-5" aria-hidden />
+            </Link>
             <LinkButton href="/items/new" size="sm">
               <Plus className="size-4" aria-hidden />
               <span className="hidden sm:inline">Add item</span>
@@ -38,7 +46,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             )}
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-24 sm:px-6 lg:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-24 sm:px-6 lg:pb-10">
+          {setupIssue ? <DataSetupNotice issue={setupIssue} /> : children}
+        </main>
       </div>
       <BottomNav />
       <TimezoneSync />
