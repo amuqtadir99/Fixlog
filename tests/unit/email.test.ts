@@ -41,7 +41,7 @@ describe("digest email", () => {
     expect(out.text).toContain("OVERDUE");
     expect(out.text).toContain("26 days overdue");
     expect(out.html).toContain("https://app.example/tasks/00000000-0000-0000-0000-000000000001");
-    expect(out.html).toContain(base.unsubscribeUrl.replace("&", "&amp;"));
+    expect(out.html).toContain(escapeHtml(base.unsubscribeUrl));
   });
 
   it("verification email carries the link", () => {
