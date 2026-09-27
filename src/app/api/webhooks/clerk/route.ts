@@ -20,7 +20,13 @@ export async function POST(req: NextRequest) {
     const userId = evt.data.id;
     const supabase = getAdminSupabase();
     // Assets cascade to tasks, logs and comments; delete leftovers defensively.
-    for (const table of ["task_comments", "service_logs", "maintenance_tasks", "assets"] as const) {
+    for (const table of [
+      "task_comments",
+      "service_logs",
+      "maintenance_tasks",
+      "assets",
+      "notification_settings",
+    ] as const) {
       const { error } = await supabase.from(table).delete().eq("user_id", userId);
       if (error) {
         console.error(`[webhook] erase ${table} failed:`, error.code, error.message);

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/server";
 import type { Asset, Comment, ServiceLogWithAsset, TaskWithAsset, Task, ServiceLog } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
+import type { NotificationSettings } from "./notifications";
 
 const ASSET_REF = "asset:assets!inner(id,name,category,item_type,archived)";
 const MAX_ROWS = 2000;
@@ -111,4 +112,11 @@ export async function getTaskDetail(id: string) {
     comments: comments.data as Comment[],
     logs: logs.data as ServiceLog[],
   };
+}
+
+export async function getNotificationSettings(): Promise<NotificationSettings | null> {
+  const { supabase, userId } = await getSupabase();
+  const { data, error } = await supabase.from("notification_settings").select("*").eq("user_id", userId).maybeSingle();
+  if (error) fail("reminder settings", error);
+  return data as NotificationSettings | null;
 }

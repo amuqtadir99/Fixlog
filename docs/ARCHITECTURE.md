@@ -90,6 +90,19 @@ Derived values (urgency, health score) are computed in `lib/domain.ts` — never
 stored — so they are always consistent with "today" in the user's timezone
 (read from a `tz` cookie, fallback UTC).
 
+### Email reminders
+
+`notification_settings` (one row per user; column-level grants, so only the server can mark an address
+confirmed) → Vercel Cron daily → `/api/cron/reminders` (Bearer `CRON_SECRET`) → `runReminders()` in
+`src/server/notifications.ts` (service role, explicit `user_id` filters) → Resend REST API
+(`src/lib/email/resend.ts`). Templates in `src/lib/email/templates.ts` are pure and unit tested. Confirmation:
+`/api/notifications/verify`. Unsubscribe: `/unsubscribe` page → POST `/api/notifications/unsubscribe`.
+
+### Setup preflight
+
+`(app)/layout.tsx` runs `checkDataAccess()` (one `limit 1` query) and renders `DataSetupNotice` instead of
+the page when tables are missing or Supabase rejects the Clerk token (`src/lib/db-errors.ts`).
+
 ### Auth modes
 
 `src/lib/auth-mode.ts` picks one per deployment: **clerk** (normal), **demo** (no Clerk keys +

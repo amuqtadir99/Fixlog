@@ -80,9 +80,10 @@ jobs:
     # in the quality job still gates high-severity advisories. Remove this line
     # once the dependency graph is on.
     continue-on-error: true
+    # Read-only on purpose: deploy.yml calls this workflow with contents:read,
+    # and a called job may not request more than its caller grants.
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4

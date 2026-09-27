@@ -68,6 +68,22 @@ into a live dashboard of what needs attention next.
 - FR-22 Month calendar showing tasks on their due dates, colour-coded by urgency; navigate months; click-through to task.
 - FR-23 Download all upcoming tasks as an `.ics` file to import into Google/Apple/Outlook calendar.
 
+### 3.7 Onboarding & help
+
+- FR-24 An empty account shows a getting-started guide: 4 steps, what each section is for, and a one-click
+  **Load sample data** option.
+- FR-25 A Help page (header ? icon) explains due labels, statuses, the health score and exports.
+- FR-26 A misconfigured deployment shows setup steps in the app (missing tables, Clerk ↔ Supabase auth)
+  instead of a generic error.
+
+### 3.8 Email reminders (Resend)
+
+- FR-27 In Settings, the user picks the address, daily or weekly, how many days ahead to include, and on/off.
+- FR-28 The address must be confirmed (already verified in Clerk, or by an emailed link) before reminders
+  are sent. The user can send a test email.
+- FR-29 A daily cron sends each due subscriber a digest of overdue tasks plus tasks due within their window,
+  with links into the app and one-click unsubscribe.
+
 ## 4. Non-functional requirements
 
 | ID                  | Requirement                                                                                                                                                                                                                                            |
@@ -86,7 +102,7 @@ into a live dashboard of what needs attention next.
 
 - Shared households / multi-user items (planned: Clerk Organizations + `org_id` column).
 - File/receipt uploads (planned: Supabase Storage with RLS).
-- Push/email reminders (planned: Vercel Cron + Resend).
+- Push notifications (email reminders shipped in 3.8).
 - Native mobile apps.
 
 ## 6. Acceptance checklist

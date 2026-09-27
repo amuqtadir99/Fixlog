@@ -11,6 +11,8 @@ dashboard of what needs attention next.
 - **Statuses** (pending, in progress, waiting for parts, pro booked, on hold, done) and **comments** per task
 - **One-click “mark done”** logs cost, provider, odometer/notes and reschedules recurring tasks
 - **Service history** timeline with CSV export
+- **Email reminders** via Resend: daily or weekly digest to a confirmed address you choose
+- **Guided onboarding** (getting-started steps, one-click sample data, Help page)
 - Dark mode, mobile-first, accessible
 
 ## Stack

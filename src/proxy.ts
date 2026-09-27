@@ -8,6 +8,8 @@ const isProtectedRoute = createRouteMatcher([
   "/tasks(.*)",
   "/calendar(.*)",
   "/history(.*)",
+  "/settings(.*)",
+  "/help(.*)",
 ]);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

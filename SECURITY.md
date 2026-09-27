@@ -24,6 +24,19 @@ this repository. We aim to acknowledge within 72 hours.
 | Abuse / DoS                               | Per-user sliding-window rate limit on all mutations and exports (Upstash Redis when configured). Row caps on list queries. Vercel Firewall/DDoS.                                                                                                                                                              | `src/lib/rate-limit.ts`                              |
 | Privacy / erasure                         | `user.deleted` webhook erases all rows for that user. Service-role key used only there.                                                                                                                                                                                                                       | `src/app/api/webhooks/clerk/route.ts`                |
 
+## Email reminders
+
+- Only confirmed addresses are emailed. An address counts as confirmed if Clerk has verified it for that
+  user, or after the user clicks a single-use link valid for 24 hours. The token is 256 bits and only its
+  SHA-256 hash is stored. Changing the address resets confirmation (DB trigger).
+- Column-level grants: users can write only their preferences. Confirmation state, tokens and send times are
+  written by the server. RLS tests prove a user can't mark their own address confirmed.
+- User-triggered emails (confirmation, test) are limited to 5 per user per hour.
+- The cron endpoint is protected by `CRON_SECRET` (constant-time compare) and fails closed when it's unset.
+- All user text in emails is HTML-escaped (unit tested). Every email has an unsubscribe link and RFC 8058
+  one-click `List-Unsubscribe` headers. Unsubscribe works only by POST, so link scanners can't trigger it.
+- Email features are off in demo mode. `RESEND_API_KEY` is server-only and never logged.
+
 ## Demo mode
 
 `DEMO_MODE=true` (honoured only when Clerk keys are absent) disables sign-in for evaluation: all visitors act
@@ -39,5 +52,6 @@ production deployment with real users in demo mode.
 - [ ] Clerk webhook → `/api/webhooks/clerk` with `user.deleted`; `CLERK_WEBHOOK_SIGNING_SECRET` set.
 - [ ] Supabase: Clerk added under _Authentication → Third-party auth_; Data API only exposes `public`.
 - [ ] `SUPABASE_SECRET_KEY` only in Vercel **production/preview server** env — never `NEXT_PUBLIC_`.
+- [ ] `CRON_SECRET` set (long random); `EMAIL_FROM` on a Resend-verified domain.
 - [ ] Upstash Redis env vars set for distributed rate limiting.
 - [ ] GitHub: branch protection on `main` (require CI + review), secret scanning & push protection on.

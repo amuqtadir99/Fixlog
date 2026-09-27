@@ -1,11 +1,16 @@
 name: Deploy
 
-# PRs → Vercel preview. Push to main → CI → DB migrations → Vercel production
-# → fast-forward the `live` branch to the deployed commit.
-# Required repository secrets (Settings → Secrets and variables → Actions):
-#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
-#   SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_ID, SUPABASE_DB_PASSWORD
-# Jobs skip cleanly (with a notice) when secrets are not configured yet.
+# Push to main → CI → Supabase migrations → (optional) Vercel production via
+# Actions → fast-forward the `live` branch.
+#
+# Hosting: by default Vercel's Git integration deploys every push (previews for
+# PRs, production for main). To deploy from Actions instead, set the repository
+# variable DEPLOY_WITH_ACTIONS=true, add VERCEL_TOKEN / VERCEL_ORG_ID /
+# VERCEL_PROJECT_ID secrets, and turn off Git deployments in Vercel.
+#
+# Database: add SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_ID, SUPABASE_DB_PASSWORD
+# secrets and migrations run automatically; without them the job skips with a
+# notice (apply supabase/migrations by hand — see docs/DEPLOYMENT.md).
 
 on:
   push:
@@ -27,54 +32,48 @@ env:
 
 jobs:
   ci:
-    uses: ./.github/workflows/ci.yml
     if: github.event_name != 'pull_request'
-
-  preview:
-    name: Vercel preview
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    environment: preview
+    uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-      pull-requests: write
+
+  preview:
+    name: Vercel preview (Actions)
+    if: >-
+      github.event_name == 'pull_request' && vars.DEPLOY_WITH_ACTIONS == 'true' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
     steps:
       - uses: actions/checkout@v4
-      - name: Check secrets
-        id: check
-        run: |
-          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
-            echo "::notice::VERCEL_TOKEN not set — skipping preview deploy"; echo "ok=false" >> "$GITHUB_OUTPUT"
-          else echo "ok=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
-        if: steps.check.outputs.ok == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
       - name: Build & deploy preview
-        if: steps.check.outputs.ok == 'true'
-        id: deploy
         run: |
           npm i -g vercel@latest
           vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
           url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### Preview: $url" >> "$GITHUB_STEP_SUMMARY"
 
   migrate:
     name: Supabase migrations
     needs: ci
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v4
       - name: Check secrets
         id: check
+        env:
+          HAS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "::notice::SUPABASE_ACCESS_TOKEN not set — skipping migrations"; echo "ok=false" >> "$GITHUB_OUTPUT"
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::notice::SUPABASE_ACCESS_TOKEN not set — skipping migrations (apply supabase/migrations manually)"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
           else echo "ok=true" >> "$GITHUB_OUTPUT"; fi
       - uses: supabase/setup-cli@v1
         if: steps.check.outputs.ok == 'true'
@@ -90,27 +89,20 @@ jobs:
           supabase db push
 
   production:
-    name: Vercel production
+    name: Vercel production (Actions)
     needs: migrate
+    if: vars.DEPLOY_WITH_ACTIONS == 'true'
     runs-on: ubuntu-latest
     environment:
       name: production
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check secrets
-        id: check
-        run: |
-          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
-            echo "::notice::VERCEL_TOKEN not set — skipping production deploy"; echo "ok=false" >> "$GITHUB_OUTPUT"
-          else echo "ok=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
-        if: steps.check.outputs.ok == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
       - name: Build & deploy production
-        if: steps.check.outputs.ok == 'true'
         id: deploy
         run: |
           npm i -g vercel@latest
@@ -119,12 +111,15 @@ jobs:
           url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Smoke test
-        if: steps.check.outputs.ok == 'true'
         run: curl -fsS --retry 5 --retry-delay 5 "${{ steps.deploy.outputs.url }}/api/health"
 
   promote-live:
     name: Update `live` branch
-    needs: production
+    needs: [ci, migrate, production]
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      needs.ci.result == 'success' && needs.migrate.result == 'success' &&
+      (needs.production.result == 'success' || needs.production.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
