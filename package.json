@@ -43,7 +43,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "supabase": "^2.118.0",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "^7",
     "vitest": "^5.0.2"
   },
   "description": "FixLog — maintenance history and live dashboard for your home, car and belongings.",
